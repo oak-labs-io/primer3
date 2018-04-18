@@ -98,6 +98,28 @@ LIBRARIES       = $(LIBPRIMER3) $(LIBDPAL) $(LIBTHAL) $(LIBOLIGOTM) $(LIBMASKER)
 DYNLIBS         = $(LIBPRIMER3_DYN) $(LIBDPAL_DYN) $(LIBTHAL_DYN) $(LIBOLIGOTM_DYN) $(LIBMASKER_DYN)
 RANLIB          = ranlib
 
+# An external shared library can be specified providing a path (to the build) and
+# the name of the library. In case the latter is non-empty the library is linked and
+# its provided calculation routine may be invoked setting
+# PRIMER_TM_FORMULA=2
+# PRIMER_SALT_CORRECTIONS=3
+# We assume that the library also incorporates its own salt correction
+# such that we are able to check for consistency of tm method and
+# salt correction method. I.e. for PRIMER_TM_FORMULA=2 will result in an error
+# if not PRIMER_SALT_CORRECTIONS=3 is used.
+# Leave EXTERNAL_TM_LIB_PATH empty if you do not want to use an exteranl library
+EXTERNAL_TM_LIB_PATH = /home/olabs.intranet/fburger/Code/samplelib/build
+EXTERNAL_TM_LIB = 
+ifneq ($(EXTERNAL_TM_LIB), )
+$(info ***** Using external Tm library $(EXTERNAL_TM_LIB) *****)
+EXTLIBS = -L$(EXTERNAL_TM_LIB_PATH) -l$(EXTERNAL_TM_LIB)
+EXT_DEFINES = -DHAVE_TM_LIB
+else
+EXTLIBS =
+EXT_DEFINES =
+endif
+
+
 PRIMER_OBJECTS1=primer3_boulder_main.o\
                 format_output.o\
                 read_boulder.o\
@@ -158,12 +180,12 @@ $(LIBPRIMER3_DYN): libprimer3.o p3_seq_lib.o
 $(LIBMASKER): masker.o
 	$(AR) rv $@ masker.o
 	$(RANLIB) $@
-               
+
 $(LIBMASKER_DYN): masker.o
 	$(CC) -shared -W1,-soname,libmasker.so.1 -o $(LIBMASKER_DYN) masker.o
 
 $(PRIMER_EXE): $(PRIMER_OBJECTS)
-	$(CPP) $(LDFLAGS) -o $@ $(PRIMER_OBJECTS) $(LIBOPTS) $(LDLIBS)
+	$(CPP) $(LDFLAGS) -o $@ $(PRIMER_OBJECTS) $(LIBOPTS) $(LDLIBS) $(EXTLIBS)
 
 libprimer3.o: libprimer3.c libprimer3.h p3_seq_lib.h dpal.h thal.h oligotm.h
 	$(CPP) -c $(CFLAGS) -Wno-deprecated $(P_DEFINES) -o $@ libprimer3.c
@@ -172,16 +194,16 @@ $(NTDPAL_EXE): ntdpal_main.o dpal.o
 	$(CPP) $(LDFLAGS) -o $@ ntdpal_main.o dpal.o
 
 $(NTTHAL_EXE): thal_main.o thal.o
-	$(CPP) $(LDFLAGS) -o $@ thal_main.o thal.o $(LDLIBS)
+	$(CPP) $(LDFLAGS) -o $@ thal_main.o thal.o $(LDLIBS) $(EXTLIBS)
 
 $(OLIGOTM_EXE): oligotm_main.c oligotm.h $(LIBOLIGOTM)
-	$(CPP) $(CFLAGS) -o $@ oligotm_main.c $(LIBOLIGOTM) $(LIBOPTS) $(LDLIBS)
+	$(CPP) $(CFLAGS) -o $@ oligotm_main.c $(LIBOLIGOTM) $(LIBOPTS) $(LDLIBS) $(EXTLIBS)
 
 $(LONG_SEQ_EXE): long_seq_tm_test_main.c oligotm.o
-	$(CPP) $(CFLAGS) -o $@ long_seq_tm_test_main.c oligotm.o $(LIBOPTS) $(LDLIBS)
+	$(CPP) $(CFLAGS) -o $@ long_seq_tm_test_main.c oligotm.o $(LIBOPTS) $(LDLIBS) $(EXTLIBS)
 
 $(MASKER_EXE): masker_main.c $(LIBRARIES)
-	$(CPP) $(CFLAGS) -o $@ masker_main.c $(LIBRARIES) $(LIBOPTS) $(LDLIBS)
+	$(CPP) $(CFLAGS) -o $@ masker_main.c $(LIBRARIES) $(LIBOPTS) $(LDLIBS) $(EXTLIBS)
 
 read_boulder.o: read_boulder.c read_boulder.h libprimer3.h dpal.h thal.h p3_seq_lib.h 
 	$(CPP) -c $(CFLAGS) $(P_DEFINES) -o $@ read_boulder.c
@@ -218,6 +240,7 @@ thal_main.o: thal_main.c thal.h
 # gcc 2.7.2 crashes while compiling ntdpal_main.c with -O2
 
 oligotm.o: oligotm.c oligotm.h
+	$(CC) -c $(CFLAGS) $(EXT_DEFINES) -o $@ oligotm.c
 
 primer3_boulder_main.o: primer3_boulder_main.c libprimer3.h dpal.h thal.h oligotm.h format_output.h print_boulder.h read_boulder.h
 	$(CPP) -c $(CFLAGS) $(P_DEFINES) primer3_boulder_main.c

@@ -609,13 +609,18 @@ double seqtm(const  char *seq,
   salt_correction_type salt_corrections)
 {
   int len = strlen(seq);
-   if (tm_method != breslauer_auto
-      && tm_method != santalucia_auto)
+  /** check valitiy of tm_method and salt_corrections combinations **/
+  if(tm_method >= last_tm_method)
     return OLIGOTM_ERROR;
-  if (salt_corrections != schildkraut
-      && salt_corrections != santalucia
-      && salt_corrections != owczarzy)
+  if(salt_corrections >= last_salt_correction)
     return OLIGOTM_ERROR;
+
+#ifdef HAVE_TM_LIB
+  if(tm_method == external_auto && salt_corrections != external) return OLIGOTM_ERROR;
+
+  /** return Tm as calculated by external library **/
+  if(tm_method == external_auto) return calc_lib_tm(seq, dna_conc, salt_conc, divalent_conc, dntp_conc);
+#endif /* HAVE_TM_LIB */
 
   if (len > nn_max_len) {
 	  return long_seq_tm(seq, 0, len, salt_conc, divalent_conc, dntp_conc);

@@ -95,13 +95,21 @@ double long_seq_tm(const char *seq,
 */
 typedef enum tm_method_type {
         breslauer_auto      = 0,
-        santalucia_auto     = 1,
+        santalucia_auto,
+#ifdef HAVE_TM_LIB
+        external_auto,
+#endif // HAVE_TM_LIB
+        last_tm_method
 } tm_method_type;
 
 typedef enum salt_correction_type {
         schildkraut    = 0,
-        santalucia     = 1,
-        owczarzy       = 2,
+        santalucia,
+        owczarzy,
+#ifdef HAVE_TM_LIB
+        external,
+#endif // HAVE_TM_LIB
+        last_salt_correction
 } salt_correction_type;
 
 /* 
@@ -195,6 +203,20 @@ int symmetry(const char *seq);
 /* Converts divalent salt concentration to monovalent salt concentration */
 
 double divalent_to_monovalent(double divalent, double dntp);
+
+#ifdef HAVE_TM_LIB
+/** External call to a library that implements a Tm calculation
+    We pass the relevant concetration information and the sequence itself.
+    It should then be up to the external function how to use the input and
+    convert it to an estimate of Tm.
+ **/
+extern double calc_lib_tm(const  char *seq,     /* The sequence. */
+                              double dna_conc,      /* DNA concentration (nanomolar). */
+                              double salt_conc,     /* Salt concentration (millimolar). */
+                              double divalent_conc, /* Concentration of divalent cations (millimolar) */
+                              double dntp_conc      /* Concentration of dNTPs (millimolar) */
+                             );
+#endif // HAVE_TM_LIB
 
 #ifdef __cplusplus
     }
