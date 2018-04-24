@@ -197,7 +197,7 @@ $(NTTHAL_EXE): thal_main.o thal.o
 	$(CPP) $(LDFLAGS) -o $@ thal_main.o thal.o $(LDLIBS) $(EXTLIBS)
 
 $(OLIGOTM_EXE): oligotm_main.c oligotm.h $(LIBOLIGOTM)
-	$(CPP) $(CFLAGS) -o $@ oligotm_main.c $(LIBOLIGOTM) $(LIBOPTS) $(LDLIBS) $(EXTLIBS)
+	$(CPP) $(CFLAGS) $(EXT_DEFINES) -o $@ oligotm_main.c $(LIBOLIGOTM) $(LIBOPTS) $(LDLIBS) $(EXTLIBS)
 
 $(LONG_SEQ_EXE): long_seq_tm_test_main.c oligotm.o
 	$(CPP) $(CFLAGS) -o $@ long_seq_tm_test_main.c oligotm.o $(LIBOPTS) $(LDLIBS) $(EXTLIBS)

@@ -315,6 +315,19 @@ oligotm(const  char *s,
   double correction;
   int len, sym;
   const char* d = s;
+
+  if(tm_method >= last_tm_method)
+    return OLIGOTM_ERROR;
+  if(salt_corrections >= last_salt_correction)
+    return OLIGOTM_ERROR;
+
+#ifdef HAVE_TM_LIB
+  if(tm_method == external_auto && salt_corrections != external) return OLIGOTM_ERROR;
+
+  /** return Tm as calculated by external library **/
+  if(tm_method == external_auto) return calc_lib_tm(s, DNA_nM, K_mM, divalent_conc, dntp_conc);
+#endif /* HAVE_TM_LIB */
+
    if(divalent_to_monovalent(divalent_conc, dntp_conc) == OLIGOTM_ERROR)
      return OLIGOTM_ERROR;
    
